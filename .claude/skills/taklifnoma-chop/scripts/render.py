@@ -209,8 +209,8 @@ def write_lines(container, lines, size, args, font_spec):
     return container.paragraphs
 
 
-def add_background(paragraph, image, w, h):
-    """Insert a full-page picture behind the text, anchored to the page corner."""
+def add_background(paragraph, image, w, h, x=0.0, y=0.0):
+    """Insert a picture behind the text at (x, y) points from the page's top-left corner."""
     run = paragraph.add_run()
     inline = run.add_picture(image, width=emu(w), height=emu(h))._inline
     anchor = OxmlElement("wp:anchor")
@@ -222,11 +222,11 @@ def add_background(paragraph, image, w, h):
     sp.set("x", "0")
     sp.set("y", "0")
     anchor.append(sp)
-    for axis in ("H", "V"):
+    for axis, value in (("H", x), ("V", y)):
         pos = OxmlElement(f"wp:position{axis}")
         pos.set("relativeFrom", "page")
         off = OxmlElement("wp:posOffset")
-        off.text = "0"
+        off.text = str(int(round(value * 12700)))
         pos.append(off)
         anchor.append(pos)
     anchor.append(copy.deepcopy(inline.find(qn("wp:extent"))))
@@ -253,9 +253,10 @@ def new_document(page_w, page_h, left, right, top, bottom):
 
 def write_single(path, args, lines, size, font_spec):
     a = args
-    doc, sec = new_document(a.card_w, a.card_h, a.off_x, a.card_w - a.off_x - a.area_w,
-                            a.off_y, a.card_h - a.off_y - a.area_h)
-    if a.frame:
+    left, top = a.card_x + a.off_x, a.card_y + a.off_y
+    doc, sec = new_document(a.page_w, a.page_h, left, a.page_w - left - a.area_w,
+                            top, a.page_h - top - a.area_h)
+    if a.frame and a.page_is_card:
         pg = border_xml(sec._sectPr, "w:pgBorders", ["top", "left", "bottom", "right"],
                         "double", 12, a.frame_hex, space="14")
         pg.set(qn("w:offsetFrom"), "page")
@@ -266,7 +267,7 @@ def write_single(path, args, lines, size, font_spec):
         pg.set(qn("w:offsetFrom"), "text")
     paras = write_lines(doc, lines, size, a, font_spec)
     if a.background:
-        add_background(paras[0], a.background, a.card_w, a.card_h)
+        add_background(paras[0], a.background, a.card_w, a.card_h, a.card_x, a.card_y)
     doc.save(path)
 
 
@@ -328,9 +329,15 @@ def write_preview(args, lines, size, colors_hex):
 
     tmp = tempfile.mkdtemp(prefix="taklifnoma-preview-")
     base = os.path.join(tmp, os.path.basename(args.out))
-    c = canvas.Canvas(base + ".pdf", pagesize=(args.card_w, args.card_h))
+    c = canvas.Canvas(base + ".pdf", pagesize=(args.page_w, args.page_h))
+    cx, cy = args.card_x, args.page_h - args.card_y - args.card_h  # card bottom-left, PDF coords
+    if not args.page_is_card:
+        c.setStrokeColor(HexColor("#999999"))
+        c.setDash(4, 3)
+        c.rect(cx, cy, args.card_w, args.card_h)
+        c.setDash()
     if args.background:
-        c.drawImage(args.background, 0, 0, args.card_w, args.card_h, preserveAspectRatio=False, mask="auto")
+        c.drawImage(args.background, cx, cy, args.card_w, args.card_h, preserveAspectRatio=False, mask="auto")
     if args.frame:
         c.setStrokeColor(HexColor("#" + args.frame_hex))
         m = 0.5 * cm
@@ -338,7 +345,7 @@ def write_preview(args, lines, size, colors_hex):
         c.rect(m, m, args.card_w - 2 * m, args.card_h - 2 * m)
         c.setLineWidth(0.5)
         c.rect(m + 2, m + 2, args.card_w - 2 * m - 4, args.card_h - 2 * m - 4)
-    ax, ay = args.off_x, args.card_h - args.off_y - args.area_h
+    ax, ay = cx + args.off_x, cy + args.card_h - args.off_y - args.area_h
     if args.guides:
         c.setStrokeColor(HexColor("#00A0E0"))
         c.setDash(3, 2)
@@ -384,6 +391,11 @@ def main():
     ap.add_argument("--card", help="card size WxH cm, e.g. 21x10")
     ap.add_argument("--area", help="text area WxH cm (default 11x6)")
     ap.add_argument("--offset", help="text area top-left from card top-left X,Y cm (default: centred)")
+    ap.add_argument("--page", choices=list(SHEETS) + ["card"],
+                    help="paper size set in the printer: A4 (card fed at --card-pos) or card (page = card)")
+    ap.add_argument("--card-pos", help="card's top-left corner on the page X,Y cm (default: centred at the top edge)")
+    ap.add_argument("--no-title", action="store_true",
+                    help="drop '# ' title lines (card already has АССАЛОМУ АЛАЙКУМ printed)")
     ap.add_argument("--font", default="times-italic", help="key from fonts.json")
     ap.add_argument("--name-color", default="#C00000")
     ap.add_argument("--text-color", default="#000000")
@@ -419,11 +431,36 @@ def main():
         sys.exit("Matn maydoni karta chegarasidan chiqib ketyapti — o'lchamlarni tekshiring")
     if args.background and args.sheet:
         sys.exit("--background faqat bitta karta uchun ishlaydi (--sheet bilan emas)")
+
+    page = args.page or preset.get("page", "A4")
+    if args.sheet:
+        page = "card"
+    args.page_is_card = page == "card"
+    if args.page_is_card:
+        args.page_w, args.page_h, args.card_x, args.card_y = args.card_w, args.card_h, 0.0, 0.0
+    else:
+        args.page_w, args.page_h = SHEETS[page]
+        pos = args.card_pos or (f"{preset['card_pos'][0]},{preset['card_pos'][1]}" if preset.get("card_pos") else None)
+        if pos:
+            args.card_x, args.card_y = parse_pair(pos, ",")
+        else:
+            args.card_x, args.card_y = (args.page_w - args.card_w) / 2, 0.0
+            print("⚠️  card_pos berilmagan — karta varaq tepasida markazda deb olindi. kalibrovka.py bilan o'lchang!")
+        if args.card_x + args.card_w > args.page_w + 0.01 or args.card_y + args.card_h > args.page_h + 0.01:
+            sys.exit(f"Karta {page} varaqdan chiqib ketyapti — card_pos ni tekshiring")
+        if args.frame:
+            print("⚠️  --frame faqat sahifa = karta bo'lganda ishlaydi (A4 da o'tkazib yuborildi)")
+    no_title = args.no_title or preset.get("preprinted_title", False)
     args.frame_hex = (FRAME_COLORS.get(args.frame) or (args.frame or "#B8860B")).lstrip("#").upper()
 
     font_spec = register_font(args.font)
     with open(args.text_file, encoding="utf-8") as f:
         lines = parse(f.read())
+    if no_title:
+        dropped = [ln for ln in lines if ln and ln[0] == "title"]
+        lines = [ln for ln in lines if not (ln and ln[0] == "title")]
+        if dropped:
+            print("ℹ️  Sarlavha qatori chiqarilmadi (kartada oldindan bosilgan)")
     fit_w, fit_h = args.area_w - 2 * args.padding * cm, args.area_h - 2 * args.padding * cm
     if args.size:
         size, ok = args.size, True
@@ -442,6 +479,10 @@ def main():
     widths, _ = layout(lines, size, args.leading, args.font)
     widest = max(range(len(widths)), key=lambda i: widths[i])
     print(f"DOCX: {path}")
+    if not args.page_is_card:
+        print(f"Sahifa {page}; karta varaqda X={args.card_x / cm:.1f}, Y={args.card_y / cm:.1f} sm dan; "
+              f"matn chap-yuqori burchagi X={(args.card_x + args.off_x) / cm:.1f}, "
+              f"Y={(args.card_y + args.off_y) / cm:.1f} sm")
     print(f"Karta {args.card_w / cm:.1f}×{args.card_h / cm:.1f} sm, matn maydoni "
           f"{args.area_w / cm:.1f}×{args.area_h / cm:.1f} sm, asosiy shrift {size}pt "
           f"(eng uzun qator: {widest + 1}-qator)")

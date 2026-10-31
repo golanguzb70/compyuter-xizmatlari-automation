@@ -37,7 +37,7 @@ Always ask **alifbo**. Then ask only what is missing from the message:
 | Address | tuman, MFY / qishloq, optional «___» тўйхонаси |
 | Type | **oddiy** (text onto a ready card — default) or **maxsus** (designed card with frame/background) |
 | Variants | how many versions (operators write "misollar soni: N") |
-| Card size | only if not the standard 11 × 6 area — see the `taklifnoma-chop` skill |
+| Card type | which preset in `taklifnoma-chop/cards.json` (e.g. `ft-oltin-15x10`). Ask if more than one card type exists; a new card must be calibrated first |
 
 Spelling the operator's input: they type quickly in Latin without special
 letters ("tuyxona", "Naxorgi", "Shoxsanam"). Convert to correct spelling —
@@ -76,14 +76,23 @@ date line is expected). See the `taklifnoma-imlo` skill for details.
 
 ```bash
 .venv/bin/python .claude/skills/taklifnoma-chop/scripts/render.py 1.txt \
-    --preset matn-11x6 --out buyurtmalar/<folder>/taklifnoma-1 --preview
+    --preset ft-oltin-15x10 --out buyurtmalar/<folder>/taklifnoma-1 --preview
 ```
 
-Open the preview PNG it prints (temp folder) with Read and look at it:
-names red, nothing touching the edges, body font ≥ 11 pt. If the font is
-too small, shorten or re-break lines rather than accept tiny text. Options
-for maxsus designs, test prints and A4 sheets are in the `taklifnoma-chop`
-skill.
+The Word page is **A4**, with the text placed at the card's measured clean
+area. If the card has a pre-printed «АССАЛОМУ АЛАЙКУМ!», the `# ` title line
+is dropped automatically, so keep it in the .txt.
+
+Open the preview PNG it prints (temp folder) with Read and check:
+- the text sits inside the dashed card outline, in the clean area;
+- the names are red;
+- the body font is ≥ 11 pt.
+
+If the font is too small, shorten or re-break lines rather than accept
+tiny text. If the preset says `"calibrated": false`, tell the operator the
+position is an estimate and point them to calibration in `taklifnoma-chop`.
+Options for maxsus designs, test prints and A4 sheets are in the
+`taklifnoma-chop` skill.
 
 ### 5. Report
 

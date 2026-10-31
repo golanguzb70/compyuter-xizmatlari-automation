@@ -8,7 +8,7 @@ name · `**...**` bold · empty line = half-line gap.
 
 ## Fixed structure
 
-1. `# А С С А Л О М У   А Л А Й К У М !` — letters spaced, 3 spaces between words
+1. `# А С С А Л О М У   А Л А Й К У М !` — letters spaced, 3 spaces between words. Always keep it in the .txt; `render.py` skips it on cards that already have it printed (`preprinted_title`).
 2. Greeting: *Азиз меҳмонимиз бўлинг!* or *Ҳурматли, азиз меҳмонимиз!*
 3. "Сизни ва оила аъзоларингизни азиз фарзандларимиз / фарзандимиз / қизимиз / набирамиз / биз учун азиз бўлган"
 4. **NAMES** in red caps, with -жон / -ой / -бек and the suffix -нинг / -ларнинг

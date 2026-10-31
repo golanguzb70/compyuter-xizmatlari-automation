@@ -1,63 +1,85 @@
 ---
 name: taklifnoma-chop
-description: Turn a checked invitation text into a print-ready Word (.docx) file at exact card size — single card, test print with text-area outline, several cards tiled on A4/A3 with cut lines, or a special (maxsus) design with frame and background. Use when rendering/printing a taklifnoma, adding a new card size, or when the printed text lands in the wrong place on the card.
+description: Turn a checked invitation text into a print-ready Word (.docx) file — an A4 page with the text placed exactly on the card's clean area (inside the ornament, below the pre-printed title, clear of emblems), plus calibration of where cards land in the printer, test prints, A4 sheets of cut-out cards, and special (maxsus) designs. Use when rendering/printing a taklifnoma, adding or measuring a new card type, or when printed text lands on the border/title/emblem.
 ---
 
 # Taklifnoma chop (Word files for printing)
 
-**Output is always .docx and nothing else.** The renderer writes only
-`<out>.docx`. `--preview` draws a PNG into a temp folder so you can check
-the layout by eye. Never copy the preview into the order folder or hand it
-to the operator.
+**Output is always .docx and nothing else.** The page is **A4** by default.
+The card is fed into the printer with A4 selected, and the text is placed
+at the exact spot on the A4 page where the card's clean area lands.
+`--preview` draws a PNG of the whole A4 page (dashed card outline + text)
+into a temp folder for your own check. Never put it in the order folder.
 
 ```bash
 .venv/bin/python .claude/skills/taklifnoma-chop/scripts/render.py matn.txt \
-    --preset matn-11x6 --out buyurtmalar/<folder>/taklifnoma-1 --preview
+    --preset ft-oltin-15x10 --out buyurtmalar/<folder>/taklifnoma-1 --preview
 ```
 
-## What the file looks like
+## Why it is measured, not centred
 
-- Word page = the card. Margins put the text exactly in the text area, centred both ways.
-- Times New Roman italic. `{NAMES}` red (#C00000) and bold. `# title` 1.25× bold. `## big line` 1.6× bold.
-- **Auto font size**: the largest size at which the widest line and the whole block fit inside the area, minus a 0.2 cm inner margin (`--padding`). Line spacing is fixed ("exactly"), so Word does not reflow.
-- If the size would fall below 8 pt, the script stops. Shorten or re-break the lines; don't force `--size`.
-- The output reports the size and the widest line. Break that line to make the text larger.
+Ready-made cards (see `ft-oltin-15x10`) have three things the text must avoid:
+1. **An ornament border.** Text must stay inside it.
+2. **A pre-printed «АССАЛОМУ АЛАЙКУМ!» at the top.** Our title line must not
+   be printed (`preprinted_title: true` drops `# ` lines automatically).
+3. **An emblem or picture** (e.g. a horse at the right). The area must stop
+   before it.
 
-## Card sizes — `cards.json`
+If text was centred on the card, or set too large, it ran into all three.
+That is the bug seen on a real print. So every card type has a measured
+preset, and the text is auto-sized to that area only.
 
-| preset | card | text area | use |
-|---|---|---|---|
-| `matn-11x6` | 11×6 | 11×6 | Page = text area. Default when the real card size is unknown. |
-| `a6-yotiq` | 14.8×10.5 | 11×6 centred | A6 landscape card |
-| `maxsus-15x21` | 15×21 | 11×15 | Designed portrait card |
+## Card presets — `cards.json`
 
-For a new card stock, measure it with a ruler and add a preset (cm):
+| key | meaning |
+|---|---|
+| `page` | Paper size selected in the printer: `A4` (default) or `card` (page = card, for full-bleed maxsus designs) |
+| `card_pos` | Card's top-left corner on the A4 page, X,Y in cm, as the printer actually feeds it. `null` = assumed top-centre (prints a warning) |
+| `card` | Card W×H, cm |
+| `area` | Clean text area W×H, cm |
+| `offset` | Text area's top-left corner measured from the card's top-left corner, X,Y in cm |
+| `preprinted_title` | `true` → `# ` title lines are not printed |
+| `calibrated` | `false` → values are estimates. Tell the operator to calibrate before a big run |
 
-```json
-"chiroqchi-oq-21x10": {"card": [21, 10], "area": [11, 6], "offset": [8.5, 2], "note": "..."}
+Current presets: `ft-oltin-15x10` (FT CARDS gold card: pre-printed title,
+horse emblem at right; **estimated from a photo, not yet calibrated**),
+`matn-11x6`, `a6-yotiq`, `maxsus-15x21`.
+
+Flags override presets: `--page A4|A3|card`, `--card-pos X,Y`,
+`--card WxH`, `--area WxH`, `--offset X,Y`, `--no-title`.
+
+## Calibrating a card type (do this once per card type and printer)
+
+```bash
+.venv/bin/python .claude/skills/taklifnoma-chop/scripts/kalibrovka.py --out buyurtmalar/kalibrovka-a4
 ```
 
-`offset` = distance from the card's **top-left corner** to the text area's
-top-left corner. `null` = centred. You can also pass sizes directly:
-`--card 21x10 --area 11x6 --offset 8.5,2`.
+The output is an A4 .docx with a mm grid. Every 1 cm square is labelled
+`X·Y` (A4 cm). Tell the operator:
 
-## Modes
+1. Cut plain paper to exactly the card's size. Feed it the way cards are fed (same tray and guides). Print at A4, scale **100% / Actual size**.
+2. Read the grid under the paper's top-left corner → `card_pos`.
+3. Lay the printed piece on a real card with the edges matched. Read the clean area's left, top, right and bottom edges, inside the ornament, below the printed title, clear of the emblem, with ~2 mm safety. Then `offset` = (left − card_pos X, top − card_pos Y) and `area` = (right − left, bottom − top).
+4. Put the numbers into `cards.json` and set `"calibrated": true`.
+5. Do a test print: run `render.py … --guides` (dashed outline of the text area) on plain paper cut to card size. It must sit inside the ornament.
+
+## Text size
+
+- The font size is chosen automatically: the largest that fits the area with a 0.2 cm inner margin (`--padding`). Line spacing is fixed ("exactly"), so Word does not reflow.
+- The output prints the body size and the widest line. Below ~11 pt, shorten or re-break that line, or drop the greeting line ("Азиз меҳмонимиз бўлинг!") on small cards. The script refuses anything under 8 pt.
+- Times New Roman italic. `{NAMES}` red (#C00000) and bold. Fonts are listed in `fonts.json`.
+
+## Other modes
 
 | Need | Flags |
 |---|---|
-| Normal card (oddiy) | `--preset …` |
-| Test print on plain paper, to hold against the card in light | `--guides`, which adds a dashed outline of the text area. Never give this file for the real print run. |
-| Several copies on one sheet, to print on cardstock and cut | `--sheet A4` (or `A3`). Picks the orientation that fits the most cards and adds dotted cut lines between cards. |
-| Maxsus design | `--frame gold\|red\|green\|#hex` (double page border) and/or `--background fon.jpg` (full-card picture behind the text, card ratio, 300 dpi). Background works on single cards only. Consider `--font georgia-italic`. |
-| Other colours | `--name-color #hex`, `--text-color #hex` |
-| Fonts | `--font times-italic` (default) `times` `georgia-italic` `georgia`; add more in `fonts.json`. Run `check.py --font` to confirm the font has ў қ ғ ҳ. |
+| Test print outline | `--guides`. Never use that file for the real run. |
+| Many cards cut from one sheet | `--sheet A4` (page = sheet, dotted cut lines) |
+| Maxsus design (we print the whole card) | `--preset maxsus-15x21 --frame gold --background fon.jpg` (page = card) |
+| Colours | `--name-color #hex`, `--text-color #hex` |
 
-For maxsus portrait cards, re-break the text into more, shorter lines.
-Otherwise the widest line keeps the font small on a tall card.
+## Printing tips for the operator
 
-## Printing tips to tell the operator
-
-- In Word's print dialog, set scale to **100% / "Actual size"**, not "Fit to page".
-- Choose the printer's card / thick paper tray and set the paper size to match the card.
-- Do one test page with `--guides` on plain paper and check it against the card. If it is shifted, fix `offset` in the preset, not in Word.
-- Word may show a "margins outside printable area" warning for edge-to-edge cards. Ignore it when the text area itself is inside the printable zone.
+- In Word, print at scale **100% / "Actual size"** with paper **A4**. Never use "Fit to page". Feed the card the same way as during calibration.
+- **Red names smudging** on glossy or metallic cards happens because ink doesn't dry fast on coated stock. Let each card dry 1–2 minutes before stacking, choose a "glossy / photo paper" media type in the printer settings, and if it still smears use `--name-color #A00000` (less ink).
+- If every card shifts by the same amount, fix `card_pos` in the preset, not in Word.

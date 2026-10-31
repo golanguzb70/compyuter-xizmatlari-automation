@@ -1,21 +1,39 @@
 {
-  "_izoh": "O'lchamlar santimetrda. card = karta (qog'oz) o'lchami, area = matn maydoni, offset = matn maydonining karta yuqori-chap burchagidan X,Y masofasi (null = markazda). Yangi karta turini o'lchab shu yerga qo'shing.",
+  "_izoh": "O'lchamlar sm da. page = printerda tanlanadigan qog'oz (A4 yoki card = sahifa kartaning o'zi). card_pos = karta A4 varaqda qayerga tushadi (yuqori-chap burchagi X,Y; null = tepada markazda). card = karta o'lchami. area = toza matn maydoni. offset = matn maydonining karta yuqori-chap burchagidan X,Y masofasi (null = markazda). preprinted_title = kartada «АССАЛОМУ АЛАЙКУМ!» oldindan bosilgan. calibrated = false bo'lsa qiymatlar taxminiy — kalibrovka.py bilan o'lchang.",
+  "ft-oltin-15x10": {
+    "page": "A4",
+    "card_pos": null,
+    "card": [15, 10],
+    "area": [11, 6],
+    "offset": [1.2, 2.0],
+    "preprinted_title": true,
+    "calibrated": false,
+    "note": "FT CARDS, oltin ramkali, tepada bosilgan «АССАЛОМУ АЛАЙКУМ!», o'ngda ot emblemasi. Matn ramka ichida, emblemadan chapda. O'lchamlar suratdan taxminiy."
+  },
   "matn-11x6": {
+    "page": "A4",
+    "card_pos": null,
     "card": [11, 6],
     "area": [11, 6],
     "offset": null,
-    "note": "Faqat 11×6 matn maydoni (sahifa = maydon). Kartaning haqiqiy o'lchami noma'lum bo'lganda yoki printer drayverida qo'lda joylashtirilganda."
+    "calibrated": false,
+    "note": "Faqat 11×6 matn maydoni. Karta turi noma'lum bo'lganda."
   },
   "a6-yotiq": {
+    "page": "A4",
+    "card_pos": null,
     "card": [14.8, 10.5],
     "area": [11, 6],
     "offset": null,
-    "note": "A6 yotiq karta, matn markazda. Haqiqiy karta bo'yicha offsetni tekshiring."
+    "calibrated": false,
+    "note": "A6 yotiq karta, matn markazda."
   },
   "maxsus-15x21": {
+    "page": "card",
     "card": [15, 21],
     "area": [11, 15],
     "offset": null,
-    "note": "Maxsus dizayn uchun tik karta (fon + ramka bilan)."
+    "calibrated": false,
+    "note": "Maxsus dizayn: sahifa = karta, fon + ramka bilan butunlay chop etiladi."
   }
 }
