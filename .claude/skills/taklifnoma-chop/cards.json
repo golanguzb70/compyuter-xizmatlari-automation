@@ -1,0 +1,21 @@
+{
+  "_izoh": "O'lchamlar santimetrda. card = karta (qog'oz) o'lchami, area = matn maydoni, offset = matn maydonining karta yuqori-chap burchagidan X,Y masofasi (null = markazda). Yangi karta turini o'lchab shu yerga qo'shing.",
+  "matn-11x6": {
+    "card": [11, 6],
+    "area": [11, 6],
+    "offset": null,
+    "note": "Faqat 11×6 matn maydoni (sahifa = maydon). Kartaning haqiqiy o'lchami noma'lum bo'lganda yoki printer drayverida qo'lda joylashtirilganda."
+  },
+  "a6-yotiq": {
+    "card": [14.8, 10.5],
+    "area": [11, 6],
+    "offset": null,
+    "note": "A6 yotiq karta, matn markazda. Haqiqiy karta bo'yicha offsetni tekshiring."
+  },
+  "maxsus-15x21": {
+    "card": [15, 21],
+    "area": [11, 15],
+    "offset": null,
+    "note": "Maxsus dizayn uchun tik karta (fon + ramka bilan)."
+  }
+}

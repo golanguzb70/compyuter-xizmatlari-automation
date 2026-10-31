@@ -1,0 +1,30 @@
+{
+  "times-italic": {
+    "regular": "/System/Library/Fonts/Supplemental/Times New Roman Italic.ttf",
+    "bold": "/System/Library/Fonts/Supplemental/Times New Roman Bold Italic.ttf",
+    "docx_name": "Times New Roman",
+    "italic": true,
+    "note": "Asosiy (standart) shrift — qishloq uslubidagi taklifnomalar"
+  },
+  "times": {
+    "regular": "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+    "bold": "/System/Library/Fonts/Supplemental/Times New Roman Bold.ttf",
+    "docx_name": "Times New Roman",
+    "italic": false,
+    "note": "To'g'ri (kursivsiz) Times"
+  },
+  "georgia-italic": {
+    "regular": "/System/Library/Fonts/Supplemental/Georgia Italic.ttf",
+    "bold": "/System/Library/Fonts/Supplemental/Georgia Bold Italic.ttf",
+    "docx_name": "Georgia",
+    "italic": true,
+    "note": "Yumshoqroq, zamonaviy — maxsus dizaynlar uchun"
+  },
+  "georgia": {
+    "regular": "/System/Library/Fonts/Supplemental/Georgia.ttf",
+    "bold": "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
+    "docx_name": "Georgia",
+    "italic": false,
+    "note": "Zamonaviy, toza"
+  }
+}
